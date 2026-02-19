@@ -71,41 +71,6 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ---
 
-<!-- ## Estructura de Repositorios
-
-```
-/curso-aplicaciones-web-ii
-│
-├── /starters
-│   ├── /semana-02-arquitectura-css
-│   ├── /semana-04-react-avanzado
-│   ├── /semana-05-async-apis
-│   ├── /semana-08-backend
-│   │   └── /python-flask
-│   ├── /semana-09-base-datos
-│   │   └── /postgresql
-│   ├── /semana-10-auth
-│   ├── /semana-11-docker
-│   ├── /semana-12-cicd
-│   ├── /semana-13-testing
-│   ├── /semana-15-azure
-│   ├── /semana-16-db-cloud
-│   └── /semana-18-seguridad
-│
-├── /proyecto-rescate
-│   ├── /node-express
-│   └── /python-flask
-│
-├── /recursos
-│   ├── /videos
-│   ├── /lecturas
-│   └── /quizzes
-│
-└── README.md
-``` -->
-
----
-
 ## Plan Semanal
 
 ### BLOQUE 1: Fundamentos y Setup (Semanas 1-3)
@@ -133,7 +98,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 **Asíncrono:**
 - MVC vs Clean Architecture vs Microservicios
-- Utility-first CSS (Tailwind)
+- Caso de uso: Utility-first CSS (Tailwind)
 
 **Sincrónico 1:**
 - Discusión: ¿Cuándo usar cada patrón arquitectónico?
@@ -144,16 +109,16 @@ Si a la **semana 10** un estudiante va muy retrasado:
 - Crear wireframes básicos**
 
 **Entregable:**
-- Diagrama de arquitectura de su proyecto
-- Wireframes de 3 pantallas principales
+- Diagrama de arquitectura de su proyecto (C4)
+- Wireframes de 3 pantallas principales *
 
 ---
 
 #### Semana 3 - Setup Profesional
 
 **Asíncrono:**
-- Git Flow y trabajo con branches
-- Lectura: Configuración de linters y formatters
+- Git Flow, Github Flow, Trunk based y trabajo con branches
+- Configuración de linters y formatters
 
 **Sincrónico 1:**
 - Setup guiado: ESLint, Prettier, Husky
