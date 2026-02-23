@@ -135,21 +135,22 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ### BLOQUE 2: Frontend Avanzado (Semanas 4-6)
 
-#### Semana 4 - React/Vue** Avanzado
+#### Semana 4 - React Avanzado: Estado y Contexto
 
 **Asíncrono:**
-- Estado global - Context vs Redux vs Zustand
-- Lectura: Custom hooks patterns**
+- Conceptos core de React: Ciclo de vida y renderizado
+- Estado global: React Context API vs Zustand/Redux
+- Lectura: Patrones de Custom Hooks
 
 **Sincrónico 1:**
-- Ejercicio: Implementar auth context
-- Refactorizar componentes a custom hooks**
+- Ejercicio: Implementar un Auth Context robusto y proteger rutas
+- Refactorizar lógica de componentes a Custom Hooks
 
 **Sincrónico 2:**
-- Implementar estructura de estado en proyecto personal
+- Implementar estructura de estado y contexto de autenticación en proyecto personal
 
 **Entregable:**
-- Componente funcional con estado global implementado
+- Aplicación React con Auth Context funcional y rutas protegidas
 
 ---
 
@@ -157,10 +158,9 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 **Asíncrono:**
 - Fetch vs Axios vs React Query**
-- Lectura: Manejo de estados de carga y error
 
 **Sincrónico 1:**
-- Ejercicio: Consumir API pública
+- Lectura: Manejo de estados de carga y error
 - Implementar loading skeletons, error boundaries
 
 **Sincrónico 2:**
@@ -214,7 +214,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 - Lectura: Estructura de proyecto backend
 
 **Sincrónico 1:**
-- Ejercicio (Node o Flask**): Crear CRUD endpoints
+- Ejercicio (Node o Flask o NET**): Crear CRUD endpoints
 - Validación de datos, manejo de errores HTTP
 
 **Sincrónico 2:**
@@ -285,7 +285,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ---
 
-#### Semana 12 - CI/CD con GitHub Actions
+#### Semana 12 - CI/CD con GitHub Actions**
 
 **Asíncrono:**
 - Qué es CI/CD y por qué importa
@@ -337,7 +337,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ### BLOQUE 5: Cloud y Producción (Semanas 15-17)
 
-#### Semana 15 - Azure Fundamentals
+#### Semana 15 - Azure Fundamentals**
 
 **Asíncrono:**
 - Servicios de Azure para desarrolladores
@@ -485,6 +485,6 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ## Contacto y Soporte
 
-- **Horario de consultas:** [Definir]
+- **Horario de consultas:** [Fines de semana, duurante las clases]
 - **Canal de comunicación:** [Whatsapp]
-- **Repositorio del curso:** [URL]
+- **Repositorio del curso:** [ISW-331](https://github.com/gonzalocalle-prog/ISW-331)
