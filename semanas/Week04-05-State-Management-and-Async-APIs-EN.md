@@ -568,7 +568,7 @@ export const productsService = {
 
 ### 3. TanStack Query (React Query) — The Standard for Server State
 
-TanStack Query is the biggest difference between junior and senior React code. It automatically handles caching, revalidation, deduplication, and loading states.
+TanStack Query automatically handles caching, revalidation, deduplication, and loading states.
 
 ```tsx
 // main.tsx
