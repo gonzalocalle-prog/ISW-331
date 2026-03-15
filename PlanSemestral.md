@@ -192,22 +192,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ### BLOQUE 3: Backend y Base de Datos (Semanas 7-10)
 
-#### Semana 7 - PARCIAL 1
-
-**Evaluación:**
-- Demo individual (15 min por estudiante)
-- Mostrar frontend funcional conectado a API (mock está ok)**
-- Explicar decisiones de arquitectura
-
-**Criterios:**
-- Código limpio y organizado
-- Manejo de estado correcto
-- UI responsive
-- Manejo de errores
-
----
-
-#### Semana 8 - Backend Fundamentals
+#### Semana 7 - Backend Fundamentals
 
 **Asíncrono:**
 - RESTful API design principles
@@ -223,6 +208,21 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 **Entregable:**
 - API con al menos 3 endpoints funcionales (documentados)
+
+---
+
+#### Semana 8 - PARCIAL 1
+
+**Evaluación:**
+- Demo individual (15 min por estudiante)
+- Mostrar frontend funcional conectado a API (mock está ok)**
+- Explicar decisiones de arquitectura
+
+**Criterios:**
+- Código limpio y organizado
+- Manejo de estado correcto
+- UI responsive
+- Manejo de errores
 
 ---
 
