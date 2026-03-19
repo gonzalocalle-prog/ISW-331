@@ -6,7 +6,7 @@
 
 ---
 
-### 01 — Fat Controllers
+### 01 — Fat Controllers → Thin Controllers + Services
 
 **Problem:** Business logic, validation, and data access all live inside controller actions. This makes code impossible to test and painful to maintain.
 
@@ -42,9 +42,25 @@ app.MapPost("/api/orders", async (CreateOrderRequest request, AppDbContext db,
 });
 ```
 
+**Solution:** Move logic into dedicated services or MediatR handlers. Keep controllers thin — they only accept a request, call a service, and return a response.
+
+```csharp
+// ✅ GOOD — Controller delegates to a service
+app.MapPost("/api/orders", async (
+    CreateOrderRequest request,
+    IOrderService orderService) =>
+{
+    var result = await orderService.CreateOrderAsync(request);
+
+    return result.Match(
+        order => Results.Created($"/api/orders/{order.Id}", order),
+        notFound => Results.NotFound(notFound.Message),
+        validation => Results.BadRequest(validation.Errors));
+});
+```
 ---
 
-### 02 — No Input Validation
+### 02 — No Input Validation → FluentValidation
 
 **Problem:** User input goes straight into your business logic without any checks. Bad data causes crashes, corrupted records, and security vulnerabilities.
 
@@ -71,9 +87,36 @@ app.MapPost("/api/products", async (
 });
 ```
 
+**Solution:** Validate every incoming request using FluentValidation or DataAnnotations. Return clear 400 Bad Request responses with details about what went wrong.
+
+```csharp
+// ✅ GOOD — Dedicated validator class
+public class CreateProductValidator
+    : AbstractValidator<CreateProductRequest>
+{
+    public CreateProductValidator(AppDbContext db)
+    {
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(200);
+
+        RuleFor(x => x.Price)
+            .GreaterThan(0);
+
+        RuleFor(x => x.Sku)
+            .NotEmpty()
+            .MaximumLength(50)
+            .MustAsync(async (sku, ct) =>
+                !await db.Products.AnyAsync(
+                    p => p.Sku == sku, ct))
+            .WithMessage("SKU already exists");
+    }
+}
+```
+
 ---
 
-### 03 — Returning Raw Exceptions
+### 03 — Returning Raw Exceptions → Global Exception Handler
 
 **Problem:** Stack traces and internal error details leak directly to API clients. This exposes sensitive information about your codebase to attackers.
 
@@ -102,9 +145,42 @@ app.MapGet("/api/orders/{id:guid}", async (
 });
 ```
 
+**Solution:** Use global exception handling middleware to catch all unhandled exceptions. Return structured error responses using ProblemDetails format.
+
+```csharp
+// ✅ GOOD — Global handler with ProblemDetails
+public class GlobalExceptionHandler(
+    ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+{
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext context, Exception exception,
+        CancellationToken cancellationToken)
+    {
+        logger.LogError(exception,
+            "Unhandled exception for {Path}",
+            context.Request.Path);
+
+        var problemDetails = new ProblemDetails
+        {
+            Title = "Internal Server Error",
+            Detail = "An unexpected error occurred",
+            Status = StatusCodes.Status500InternalServerError,
+            Instance = context.Request.Path
+        };
+
+        context.Response.StatusCode = 500;
+        await context.Response
+            .WriteAsJsonAsync(problemDetails, cancellationToken);
+
+        return true;
+    }
+}
+```
+
 ---
 
-### 04 — Blocking Async with .Result or .Wait()
+### 04 — Blocking Async → async/await All the Way
+
 
 **Problem:** Calling `.Result` or `.Wait()` on async methods blocks threads and can cause deadlocks. Under load, your thread pool gets exhausted and your API stops responding.
 
@@ -136,9 +212,37 @@ public class PaymentController : ControllerBase
 }
 ```
 
+**Solution:** Use async/await all the way down from controllers to database calls. Never mix sync and async code in the same call chain.
+
+```csharp
+// ✅ GOOD — Fully async with CancellationToken
+public class PaymentController : ControllerBase
+{
+    private readonly IPaymentService _paymentService;
+
+    [HttpPost("process")]
+    public async Task<IActionResult> ProcessPayment(PaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _paymentService.GetUserAsync(request.UserId,
+            cancellationToken);
+
+        var validation = await _paymentService.ValidatePaymentMethodAsync(
+            request.CardToken, cancellationToken);
+
+        if (!validation.IsValid)
+            return BadRequest("Invalid payment method");
+
+        var charge = await _paymentService.ChargeAsync(request.Amount,
+            request.CardToken, cancellationToken);
+
+        return Ok(new { TransactionId = charge.Id, Status = charge.Status });
+    }
+}
+```
 ---
 
-### 05 — Ignoring CancellationTokens
+### 05 — Ignoring CancellationTokens → Pass Them Everywhere
 
 **Problem:** When a client cancels a request, your API keeps processing the work. Database queries and HTTP calls continue wasting server resources for nothing.
 
@@ -167,9 +271,40 @@ public class OrderService
 }
 ```
 
+**Solution:** Accept CancellationToken in every async endpoint and pass it to EF Core queries and HttpClient calls. This frees up resources for requests that actually matter.
+
+```csharp
+// ✅ GOOD — CancellationToken threaded through every call
+public class OrderService
+{
+    private readonly HttpClient _httpClient;
+    private readonly IOrderRepository _repository;
+
+    public async Task<OrderResult> ProcessOrderAsync(int orderId,
+        CancellationToken cancellationToken)
+    {
+        var order = await _repository.GetOrderAsync(orderId, cancellationToken);
+        var inventory = await _httpClient.GetFromJsonAsync<Inventory>(
+            $"https://api.inventory.com/check/{order.ProductId}", cancellationToken);
+
+        if (inventory.Available)
+        {
+            await _repository.UpdateOrderStatusAsync(orderId, "Confirmed",
+                cancellationToken);
+
+            await _httpClient.PostAsJsonAsync("https://api.payment.com/charge", order,
+                cancellationToken);
+        }
+
+        return new OrderResult { Success = inventory.Available };
+    }
+}
+```
+
 ---
 
-### 06 — No Pagination
+### 06 — No Pagination → Skip/Take or Cursor-Based
+
 
 **Problem:** Returning entire database tables in a single API response. As data grows, response times explode and memory usage spikes.
 
@@ -187,9 +322,32 @@ app.MapGet("/api/products", async (AppDbContext db) =>
 });
 ```
 
+**Solution:** Add pagination to every collection endpoint using skip/take or cursor-based approach. Support filtering and sorting so clients request only the data they need.
+
+```csharp
+// ✅ GOOD — Paginated, filtered, and projected
+app.MapGet("/api/products", async (
+    AppDbContext db,
+    [AsParameters] PaginationQuery query) =>
+{
+    var products = await db.Products
+        .Where(p => query.Category == null
+            || p.Category.Name == query.Category)
+        .OrderBy(p => p.Name)
+        .Skip((query.Page - 1) * query.PageSize)
+        .Take(query.PageSize)
+        .Select(p => new ProductResponse(
+            p.Id, p.Name, p.Price))
+        .ToListAsync();
+
+    return Results.Ok(new PagedResponse<ProductResponse>(
+        products, query.Page, query.PageSize));
+});
+```
+
 ---
 
-### 07 — Wrong HTTP Status Codes
+### 07 — Wrong HTTP Status Codes → Semantic Status Codes
 
 **Problem:** Returning 200 OK for everything, including errors and failures. Frontend developers can't distinguish success from failure without parsing the body.
 
@@ -216,9 +374,30 @@ app.MapPost("/api/customers", async (
 });
 ```
 
+**Solution:** Use proper codes: 400 for bad input, 404 for missing resources, 409 for conflicts, 500 for server failures. This makes your API predictable and easy to integrate with.
+
+```csharp
+// ✅ GOOD — Correct status codes with ProblemDetails
+app.MapGet("/api/customers/{id:guid}", async (
+    Guid id, AppDbContext db) =>
+{
+    var customer = await db.Customers.FindAsync(id);
+
+    return customer is null
+        ? Results.NotFound(new ProblemDetails
+        {
+            Title = "Customer Not Found",
+            Detail = $"No customer found with ID {id}",
+            Status = StatusCodes.Status404NotFound
+        })
+        : Results.Ok(new CustomerResponse(
+            customer.Id, customer.Name, customer.Email));
+});
+```
+
 ---
 
-### 08 — Over-fetching Data
+### 08 — Over-fetching Data → Projections with Select()
 
 **Problem:** Querying all columns and loading all related entities when the client only needs a few fields. This wastes database resources and slows down response times.
 
@@ -244,9 +423,30 @@ app.MapGet("/api/orders/{id:guid}", async (
 });
 ```
 
+**Solution:** Use projections with `Select()` to return only the fields you need. Avoid eager loading related entities unless they are required for the response.
+
+```csharp
+// ✅ GOOD — Only fetching what the client needs
+app.MapGet("/api/orders/{id:guid}", async (
+    Guid id, AppDbContext db) =>
+{
+    var order = await db.Orders
+        .Where(o => o.Id == id)
+        .Select(o => new OrderResponse(
+            o.Id, o.Customer.Name, o.Total,
+            o.Items.Select(i => new OrderItemResponse(
+                i.Product.Name, i.Quantity, i.Price
+            )).ToList()))
+        .FirstOrDefaultAsync();
+
+    return order is null
+        ? Results.NotFound()
+        : Results.Ok(order);
+});
+```
 ---
 
-### 09 — Returning EF Entities as API Responses
+### 09 — Returning EF Entities → Dedicated DTOs
 
 **Problem:** Exposing database models directly as API responses leaks your internal structure to clients. It also causes circular reference issues and exposes sensitive fields.
 
@@ -275,9 +475,30 @@ app.MapGet("/api/customers/{id:guid}", async (
 });
 ```
 
+**Solution:** Map EF entities to dedicated DTOs or response models before returning them. Use mapping libraries like Mapster or Mapperly to keep the code clean.
+
+```csharp
+// ✅ GOOD — Dedicated response record, projected at the query level
+public record CustomerResponse(
+    Guid Id, string Name, string Email, int TotalOrders);
+
+app.MapGet("/api/customers/{id:guid}", async (
+    Guid id, AppDbContext db) =>
+{
+    var customer = await db.Customers
+        .Where(c => c.Id == id)
+        .Select(c => new CustomerResponse(
+            c.Id, c.Name, c.Email, c.Orders.Count))
+        .FirstOrDefaultAsync();
+
+    return customer is null
+        ? Results.NotFound()
+        : Results.Ok(customer);
+});
+```
 ---
 
-### 10 — No Rate Limiting
+### 10 — No Rate Limiting → Built-in Middleware
 
 **Problem:** Your API has no throttling, leaving it wide open to abuse. A single client can flood your server with requests and bring it down.
 
@@ -302,9 +523,31 @@ app.MapPost("/api/auth/login", async (
 app.Run();
 ```
 
+**Solution:** Use the built-in Rate Limiting middleware in ASP.NET Core. Configure fixed window, sliding window, or token bucket policies based on your needs.
+
+```csharp
+// ✅ GOOD — Rate limiting configured and applied
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("auth", opt =>
+    {
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
+    });
+
+    options.RejectionStatusCode =
+        StatusCodes.Status429TooManyRequests;
+});
+
+var app = builder.Build();
+app.UseRateLimiter();
+
+app.MapPost("/api/auth/login", handler)
+    .RequireRateLimiting("auth");
+```
 ---
 
-### 11 — No Observability
+### 11 — No Observability → OpenTelemetry + Serilog
 
 **Problem:** You have zero visibility into what is happening inside your API. When something breaks in production, you are guessing instead of diagnosing.
 
@@ -330,9 +573,32 @@ app.MapPost("/api/orders", async (
 });
 ```
 
+**Solution:** Add structured logging with Serilog, distributed tracing, and metrics using OpenTelemetry. Use dashboards to monitor performance and set up alerts for anomalies.
+
+```csharp
+// ✅ GOOD — Full observability stack
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r
+        .AddService("OrdersApi"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter());
+
+builder.Services.AddSerilog(config => config
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Service", "OrdersApi")
+    .WriteTo.OpenTelemetry());
+```
+
 ---
 
-### 12 — No Idempotency on Mutating Endpoints
+### 12 — No Idempotency → Idempotency Keys
 
 **Problem:** When a client retries a request, your API creates duplicate records or triggers side effects twice. This leads to double charges, duplicate orders, and corrupted data.
 
@@ -356,6 +622,32 @@ app.MapPost("/api/payments", async (
 
     db.Payments.Add(payment);
     await db.SaveChangesAsync();
+
+    return Results.Created(
+        $"/api/payments/{payment.Id}", payment);
+});
+```
+
+**Solution:** Implement idempotency keys on POST and PUT operations. If the key was already processed, return the original response instead of executing again.
+
+```csharp
+// ✅ GOOD — Idempotency key prevents duplicate processing
+app.MapPost("/api/payments", async (
+    [FromHeader(Name = "Idempotency-Key")]
+    string idempotencyKey,
+    ProcessPaymentRequest request,
+    IPaymentService paymentService) =>
+{
+    var existing = await paymentService
+        .GetByIdempotencyKeyAsync(idempotencyKey);
+
+    if (existing is not null)
+    {
+        return Results.Ok(existing); // Return cached result
+    }
+
+    var payment = await paymentService
+        .ProcessPaymentAsync(request, idempotencyKey);
 
     return Results.Created(
         $"/api/payments/{payment.Id}", payment);
