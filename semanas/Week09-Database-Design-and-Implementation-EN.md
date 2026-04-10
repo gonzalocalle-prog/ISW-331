@@ -103,7 +103,7 @@ Designing a database is not about immediately writing `CREATE TABLE`. There is a
 
 ```
 Requirements ──▶ Identify Entities ──▶ Define Attributes ──▶ Establish Relationships
-                                                                      │
+                                                                        │
                  Implementation ◀── Normalization ◀── E-R Diagram ◀───┘
 ```
 
@@ -396,6 +396,13 @@ PK = (order_id, product_id). But `product_name` depends only on `product_id`, no
 **order_item:** (order_id, product_id, quantity)
 **product:** (product_id, product_name)
 
+*Functional dependency* -> If you know the value of column A, you can figure out the value of column B
+
+`employee_id -> functional determines -> employee_name`
+`employee_name -> functional depends -> employee_id`
+
+*A proper subset* is a smaller group completely contained within a larger group, but isn't the same as the large group
+
 #### Third Normal Form (3NF) — No Transitive Dependencies
 
 A table is in 3NF if:
@@ -524,18 +531,6 @@ WHERE o.id = 1;
 | `LEFT JOIN` | All rows from the left table + matching rows from the right (NULL if no match) | "Show me all customers, even without orders" |
 | `RIGHT JOIN` | All rows from the right table + matching rows from the left | Rarely used — rewrite as a LEFT JOIN with tables swapped |
 | `FULL OUTER JOIN` | All rows from both tables, NULLs where there's no match | Comparing two datasets for differences |
-
-```
-INNER JOIN:          LEFT JOIN:           FULL OUTER JOIN:
-  ┌───┬───┐            ┌───┬───┐            ┌───┬───┐
-  │ A │ B │            │ A │ B │            │ A │ B │
-  │   ┼───┤            ├───┼───┤            ├───┼───┤
-  │   │ ██│            │███│ ██│            │███│ ██│
-  │   ┼───┤            ├───┼───┤            ├───┼───┤
-  └───┴───┘            └───┴───┘            └───┴───┘
-  Only overlap         All of A +           All of both
-                       matching B
-```
 
 > *Reference: Grokking Relational Database Design, Chapter 2 — Related tables, foreign keys, and JOINs*
 
@@ -704,7 +699,7 @@ Entities: `User`, `Product`, `Category`, `Cart`, `Order`, `OrderItem`
 
 #### 2. Draw the E-R Diagram
 
-Use [dbdiagram.io](https://dbdiagram.io) or Excalidraw to create a visual E-R diagram showing all entities, attributes, and relationships.
+Use [dbdiagram.io](https://dbdiagram.io) or [drawdb.app](https://www.drawdb.app/) or Excalidraw to create a visual E-R diagram showing all entities, attributes, and relationships.
 
 #### 3. Normalize to 3NF
 
