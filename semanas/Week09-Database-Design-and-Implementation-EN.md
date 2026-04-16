@@ -585,15 +585,140 @@ Indexes are not free:
 
 Normalization reduces redundancy. But sometimes, fully normalized schemas require many JOINs, and those JOINs hurt performance.
 
-**Denormalization** means intentionally adding some redundancy to speed up reads:
+**Denormalization** means intentionally introducing redundancy into a normalized schema to improve read performance at the cost of write complexity.
 
-| Scenario | Denormalization Strategy | Trade-off |
-|----------|------------------------|-----------|
-| Displaying order total on a dashboard | Store `total` in the `order` table instead of calculating from `order_items` every time | Must update `total` when items change |
-| Showing product count per category | Store `product_count` in `category` table | Must update count on product insert/delete |
-| Reporting user's full address | Store `city` and `state` alongside `zip_code` in the user table | Duplicated data if zip changes |
+> **The rule:** Normalize first. Measure the real bottleneck. Denormalize only when you have evidence — not speculation — that a normalized design is causing a problem. Premature denormalization creates data integrity bugs that are hard to find and expensive to fix.
 
-> **Important:** Denormalize only when you have a **measured performance problem**. Start with a normalized design, optimize later.
+#### The Fundamental Trade-off
+
+| Normalized | Denormalized |
+|------------|-------------|
+| One place to update a value | Multiple places to update the same value |
+| Risk of anomalies is low | Risk of stale / inconsistent data |
+| Reads may require JOINs | Reads are simpler and faster |
+| Suitable for write-heavy workloads | Suitable for read-heavy workloads |
+
+#### Legitimate Reasons to Denormalize
+
+**1. Pre-computing aggregated values**
+
+When a value would require recalculating an aggregate over many rows on every read, storing the result is justified — as long as you keep it updated.
+
+```sql
+-- Denormalized: store the total on the order row
+-- instead of summing order_items on every request
+ALTER TABLE "order" ADD COLUMN total DECIMAL(10,2) NOT NULL DEFAULT 0;
+
+-- You must update it whenever items are inserted, updated, or deleted
+UPDATE "order" SET total = (
+    SELECT SUM(quantity * unit_price) FROM order_item WHERE order_id = 1
+) WHERE id = 1;
+```
+
+| Scenario | Aggregated Column | Must Update When... |
+|----------|------------------|---------------------|
+| Order total on dashboard | `order.total` | Item added, quantity changed, item removed |
+| Products per category | `category.product_count` | Product created or reassigned |
+| Average product rating | `product.avg_rating` | Review added, edited, or deleted |
+| User's order count | `user.order_count` | Order placed or cancelled |
+
+**2. Snapshotting data at the time of a transaction**
+
+This is perhaps the most important and most overlooked reason to denormalize. When a transaction is recorded, the values that were true *at that moment* should be stored directly — not referenced from a table that can change later.
+
+```sql
+-- order_item stores unit_price at the time of the order
+-- NOT a reference to product.price (which may change tomorrow)
+CREATE TABLE order_item (
+    id         SERIAL PRIMARY KEY,
+    order_id   INT NOT NULL REFERENCES "order"(id),
+    product_id INT NOT NULL REFERENCES product(id),
+    quantity   INT NOT NULL DEFAULT 1,
+    unit_price DECIMAL(10,2) NOT NULL   -- snapshot of price at purchase time
+);
+```
+
+Same pattern applies to:
+- Storing `customer_name` / `shipping_address` on an order (the customer may update their profile later)
+- Storing `tax_rate` on an invoice (tax rates change)
+- Storing `discount_amount` on an order line (promotions expire)
+
+**3. Avoiding expensive JOINs on hot read paths**
+
+If a specific query is executed thousands of times per second and its `EXPLAIN ANALYZE` shows a costly JOIN even with proper indexes, copying the joined column into the main table is reasonable.
+
+```sql
+-- Normalized: every dashboard load JOINs customer to get the name
+SELECT o.id, c.name FROM "order" o JOIN customer c ON o.customer_id = c.id;
+
+-- Denormalized: store customer_name directly on the order
+-- (acceptable here because order history doesn't need to reflect name changes)
+ALTER TABLE "order" ADD COLUMN customer_name VARCHAR(100);
+```
+
+Use this pattern when:
+- The source value is stable (unlikely to change, or changes don't need to propagate)
+- The query is a known hot path with a measured performance problem
+- Adding an index on the join column did not solve the problem
+
+**4. Read-optimized reporting and analytics tables**
+
+For aggregate reports and analytics dashboards that are never used to write data back, maintaining a separate denormalized table (or a materialized view) avoids degrading the transactional schema:
+
+```sql
+-- A denormalized summary table refreshed nightly or via triggers
+CREATE TABLE daily_sales_summary (
+    report_date  DATE PRIMARY KEY,
+    total_orders INT NOT NULL,
+    total_revenue DECIMAL(12,2) NOT NULL,
+    top_category VARCHAR(100)
+);
+```
+
+This keeps analytical queries fast without impacting `INSERT`/`UPDATE` throughput on the transactional tables.
+
+#### When NOT to Denormalize
+
+| Situation | Why Denormalization Is Wrong Here |
+|-----------|----------------------------------|
+| You haven't measured a performance problem | You're optimizing for a problem that may not exist |
+| The column changes frequently | Every change must propagate; risk of corruption is high |
+| The data is small (< a few thousand rows) | A full table scan is fast; an index solves it |
+| A proper index would fix the query | Add the index first — it's much safer |
+| You're doing it to avoid writing a JOIN | That's a code simplicity shortcut, not a performance reason |
+| The data models a current fact (address, price) | Use a reference; snapshotting is only for history |
+
+#### Keeping Denormalized Data Consistent
+
+Once you denormalize, the burden of consistency moves from the database (constraints) to your application or database triggers. Your options:
+
+| Strategy | How It Works | Tradeoff |
+|----------|-------------|----------|
+| **Application logic** | The code that writes to the source table also updates the denormalized column | Simple to understand; can be missed by direct SQL operations |
+| **Database trigger** | A trigger automatically updates the denormalized value on insert/update/delete | Consistent regardless of how data is changed; harder to test and debug |
+| **Scheduled job** | A background job recalculates the denormalized value periodically | Fine for analytics; introduces staleness for transactional data |
+| **Materialized view** | The database maintains a pre-computed query result | Declarative and clean; must be refreshed; PostgreSQL supports `REFRESH MATERIALIZED VIEW` |
+
+```sql
+-- Example: trigger to keep order.total in sync
+CREATE OR REPLACE FUNCTION update_order_total()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE "order"
+    SET total = (
+        SELECT COALESCE(SUM(quantity * unit_price), 0)
+        FROM order_item
+        WHERE order_id = COALESCE(NEW.order_id, OLD.order_id)
+    )
+    WHERE id = COALESCE(NEW.order_id, OLD.order_id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_order_total
+AFTER INSERT OR UPDATE OR DELETE ON order_item
+FOR EACH ROW EXECUTE FUNCTION update_order_total();
+```
 
 > *Reference: Grokking Relational Database Design, Chapter 7 — Security and Optimization (indexing, denormalization)*
 
