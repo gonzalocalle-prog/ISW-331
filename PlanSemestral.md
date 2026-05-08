@@ -317,7 +317,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 - Agregar tests a proyecto personal
 
 **Entregable:**
-- Al menos 5 tests unitarios y 2 tests de integración
+- Al menos 5 tests unitarios y 2 tests de integración*
 
 ---
 
@@ -337,7 +337,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ### BLOQUE 5: Cloud y Producción (Semanas 15-17)
 
-#### Semana 15 - Azure Fundamentals**
+#### Semana 15 - Azure/AWS Fundamentals**
 
 **Asíncrono:**
 - Servicios de Azure para desarrolladores
