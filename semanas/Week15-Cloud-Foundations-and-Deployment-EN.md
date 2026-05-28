@@ -67,8 +67,6 @@ User browser
    -> Logs and monitoring
 ```
 
-Once students can explain that flow clearly, they already understand the core of beginner cloud architecture.
-
 ---
 
 ## Part 3 - Cloud Service Models and Good Defaults
@@ -91,8 +89,6 @@ For most students, the best first deployment target is one of these:
 - A beginner-friendly platform-as-a-service host
 
 That keeps the focus on deployment architecture rather than OS administration.
-
-> **Practical rule:** In an educational setting, choose the simplest cloud option that still teaches real production concepts.
 
 ---
 
@@ -223,11 +219,11 @@ Source code
 7. Verify a health endpoint or critical user flow.
 8. Document the deployed URL and setup notes.
 
-### What students should learn from this workflow
+### What should we learn from this workflow
 
 The main lesson is that deployment is a system, not a button.
 
-Students should be able to explain:
+We should be able to explain:
 
 - What was deployed
 - Where it is running
@@ -262,8 +258,6 @@ At this level, reliability means:
 - There is at least one way to inspect failures
 
 ### Observability basics
-
-Students do not need full distributed tracing this week. They do need:
 
 - Application logs
 - Basic request or error visibility
@@ -305,7 +299,7 @@ That habit is much more valuable than memorizing one vendor interface.
 
 ## Part 10 - Suggested Exercise and Deliverable
 
-### Suggested in-class exercise
+### Suggested exercise
 
 Deploy a small application to any managed cloud platform. The project can be:
 
@@ -367,19 +361,6 @@ This path fits well if the asynchronous goal is to reinforce:
 - Working with managed cloud services
 - Development workflows for cloud applications
 - Monitoring and operational thinking
-
-### Teaching recommendation
-
-Use AWS Academy as supporting material, not as the definition of the week's learning outcomes.
-
-Stay provider-agnostic by assessing students on:
-
-- Their deployment architecture
-- Their use of configuration and secrets
-- Their ability to explain runtime dependencies
-- Their ability to verify and debug a deployment
-
-That way, AWS Academy adds structure without narrowing the course to one provider.
 
 ---
 

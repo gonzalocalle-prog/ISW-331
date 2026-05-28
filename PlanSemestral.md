@@ -337,43 +337,22 @@ Si a la **semana 10** un estudiante va muy retrasado:
 
 ### BLOQUE 5: Cloud y Producción (Semanas 15-17)
 
-#### Semana 15 - Azure/AWS Fundamentals**
+#### Semana 15 - Fundamentos de Cloud y Deploy
 
 **Asíncrono:**
-- Servicios de Azure para desarrolladores
-- Lectura: Azure App Service, Blob Storage
+- Cloud fundamentals: compute, storage, networking, IAM y servicios administrados
+- Lectura: managed app hosting, object storage, DNS, variables de entorno y secretos
+- Ruta opcional de apoyo: AWS Academy Cloud Foundations o AWS Academy Cloud Developing
 
-**Sincrónico 1:**
-- Ejercicio: Deploy a Azure App Service
-- Configurar variables de entorno, secretos
+- Desplegar una aplicación usando un servicio cloud administrado
+- Configurar variables de entorno, secretos y una URL pública
 
-**Sincrónico 2:**
-- Migrar proyecto personal a Azure
-
-**Entregable:**
-- Aplicación corriendo en Azure con dominio accesible
+- Migrar proyecto personal al proveedor cloud elegido
+- Definir checklist básico de producción: logs, health check y costos
 
 ---
 
-#### Semana 16 - Base de Datos en la Nube
-
-**Asíncrono:**
-- Managed databases - pros y contras
-- Lectura: Optimización de queries, índices
-
-**Sincrónico 1:**
-- Ejercicio: Migrar a MongoDB Atlas o Azure Cosmos DB
-- Configurar backups, connection pooling
-
-**Sincrónico 2:**
-- Migrar base de datos de proyecto personal
-
-**Entregable:**
-- Base de datos en la nube conectada a la aplicación
-
----
-
-#### Semana 17 - Monitoreo y Logging
+#### Semana 16 - Monitoreo y Logging
 
 **Asíncrono:**
 - Por qué el monitoreo salva vidas (y trabajos)**
@@ -465,7 +444,7 @@ Si a la **semana 10** un estudiante va muy retrasado:
 | **Backend hosting** | Railway, Render, Azure App Service |
 | **Base de datos** | MongoDB Atlas, PlanetScale, Azure Cosmos DB |
 | **CI/CD** | GitHub Actions |
-| **Monitoreo** | Sentry, Azure Application Insights |
+| **Monitoreo** | Sentry, Azure Application Insights, Prometheus + Grafana + Loki |
 | **Containers** | Docker Desktop, Podman |
 | **Diseño** | Figma, Excalidraw |
 
