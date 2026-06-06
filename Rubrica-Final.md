@@ -12,6 +12,8 @@
 
 > **Nota:** La plataforma de hosting puede ser cualquiera. Lo evaluado no es el proveedor, sino que la aplicación esté realmente publicada, funcione de extremo a extremo y llegue a producción mediante un proceso automatizado. Si no existe URL pública funcional o no existe automatización del proceso de entrega, la evaluación no puede considerarse completa.
 
+> **Nota de alcance integrador:** Esta rúbrica final **incluye** criterios trabajados en las rúbricas anteriores de Semanas 1–8 y Semanas 9–14. Aunque el foco principal ahora es la aplicación completa en producción y su automatización, se sigue esperando dominio de problema, usuario, frontend, backend, API, base de datos, autenticación, arquitectura, Docker, CI/CD, testing y organización técnica. Si alguno de esos componentes no está presente, no funciona, no puede demostrarse o no puede explicarse, eso **sí afecta la nota final** en los criterios correspondientes de esta rúbrica.
+
 ---
 
 ## 1. Aplicación Integral y Dominio del Proyecto *(40 pts — más importante)*
@@ -72,6 +74,8 @@ Durante la demo, el estudiante debe poder mostrar o responder con precisión lo 
 8. ¿Cómo verificamos que la app quedó saludable después del despliegue?
 
 > **Nota:** No basta con nombrar estos elementos de memoria. El estudiante debe poder ubicar dónde están definidos, cómo se usan y por qué importan dentro del flujo real de entrega y operación.
+
+> **Aclaración:** Que el examen final esté centrado en despliegue y automatización no significa que los contenidos previos desaparecen. La ausencia de trabajo real o comprensión en temas vistos antes también reduce la calificación final, porque la app publicada debe sostenerse sobre esas bases.
 
 ---
 
