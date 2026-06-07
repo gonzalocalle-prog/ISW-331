@@ -378,10 +378,6 @@ Si a la **semana 10** un estudiante va muy retrasado:
 - OWASP Top 10
 - Lectura: XSS, CSRF, SQL Injection - cómo prevenirlos**
 
-**Sincrónico 1:**
-- Mini-hackathon: encontrar vulnerabilidades en apps de compañeros**
-- Documentar hallazgos y fixes
-
 **Sincrónico 2:**
 - Aplicar fixes de seguridad en proyecto personal
 
